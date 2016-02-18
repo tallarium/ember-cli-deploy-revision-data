@@ -14,6 +14,7 @@ module.exports = {
       defaultConfig: {
         type: 'file-hash',
         filePattern: 'index.html',
+        scm: 'git',
         distDir: function(context) {
           return context.distDir;
         },
@@ -22,17 +23,19 @@ module.exports = {
         },
         versionFile: 'package.json',
       },
-      prepare: function(context) {
-        var self = this;
-        var type = this.readConfig('type');
-        var DataGenerator = require('./lib/data-generators')[type];
-        var dataGenerator = new DataGenerator({
-          plugin: this
-        });
 
-        this.log('creating revision data using `' + type + '`', { verbose: true });
-        return dataGenerator.generate()
-          .then(function(data) {
+      prepare: function(/*context*/) {
+        var self = this;
+
+        var promises = {
+            data: this._getData(),
+            scm: this._getScmData()
+        };
+
+        return Promise.hash(promises)
+          .then(function(results) {
+            var data = results.data;
+            data.scm = results.scm;
             self.log('generated revision data for revision: `' + data.revisionKey + '`', { verbose: true });
             return data;
           })
@@ -41,6 +44,28 @@ module.exports = {
           })
           .catch(this._errorMessage.bind(this));
       },
+
+      _getData: function() {
+        var type = this.readConfig('type');
+        this.log('creating revision data using `' + type + '`', { verbose: true });
+        var DataGenerator = require('./lib/data-generators')[type];
+        return new DataGenerator({
+          plugin: this
+        }).generate();
+      },
+
+      _getScmData: function() {
+        var scm = this.readConfig('scm');
+        if (scm) {
+          var ScmDataGenerator = require('./lib/scm-data-generators')[scm];
+          return new ScmDataGenerator({
+            plugin: this
+          }).generate();
+        } else {
+          return Promise.resolve();
+        }
+      },
+
       _errorMessage: function(error) {
         this.log(error, { color: 'red' });
         return Promise.reject(error);
