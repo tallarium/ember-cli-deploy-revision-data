@@ -13,6 +13,7 @@ module.exports = {
       name: options.name,
       defaultConfig: {
         type: 'file-hash',
+        combo: 'file-hash',
         filePattern: 'index.html',
         distDir: function(context) {
           return context.distDir;

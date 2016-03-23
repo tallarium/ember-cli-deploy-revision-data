@@ -16,7 +16,7 @@ describe('the file-hash data generator', function() {
       before(function() {
         var plugin = {
           stubConfig: {
-            distDir: 'tests/fixtures',
+            distDir: 'tests/fixtures/repo',
             distFiles: ['index.html'],
             filePattern: 'index.html'
           },
